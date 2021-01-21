@@ -1040,18 +1040,16 @@ func (cs *State) enterPropose(height int64, round int32) {
 	}
 
 	if cs.isProposer(address) {
-		logger.Info("enterPropose: Our turn to propose",
-			"proposer",
-			address,
-			"privValidator",
-			cs.privValidator)
+		logger.Debug("enterPropose: Our turn to propose",
+			"proposer", address,
+			"privValidator", cs.privValidator,
+		)
 		cs.decideProposal(height, round)
 	} else {
 		logger.Debug("enterPropose; not our turn to propose",
-			"proposer",
-			cs.Validators.GetProposer().Address,
-			"privValidator",
-			cs.privValidator)
+			"proposer", cs.Validators.GetProposer().Address,
+			"privValidator", cs.privValidator,
+		)
 	}
 }
 
@@ -1437,11 +1435,11 @@ func (cs *State) enterCommit(height int64, commitRound int32) {
 	if !cs.ProposalBlock.HashesTo(blockID.Hash) {
 		if !cs.ProposalBlockParts.HasHeader(blockID.PartSetHeader) {
 			logger.Info(
-				"Commit is for a block we don't know about. Set ProposalBlock=nil",
-				"proposal",
-				cs.ProposalBlock.Hash(),
-				"commit",
-				blockID.Hash)
+				"commit is for a block we do not know about; set ProposalBlock=nil",
+				"proposal", cs.ProposalBlock.Hash(),
+				"commit", blockID.Hash,
+			)
+
 			// We're getting the wrong block.
 			// Set up ProposalBlockParts and keep waiting.
 			cs.ProposalBlock = nil
@@ -1473,12 +1471,11 @@ func (cs *State) tryFinalizeCommit(height int64) {
 	if !cs.ProposalBlock.HashesTo(blockID.Hash) {
 		// TODO: this happens every time if we're not a validator (ugly logs)
 		// TODO: ^^ wait, why does it matter that we're a validator?
-		logger.Info(
-			"Attempt to finalize failed. We don't have the commit block.",
-			"proposal-block",
-			cs.ProposalBlock.Hash(),
-			"commit-block",
-			blockID.Hash)
+		logger.Debug(
+			"attempt to finalize failed; we do not have the commit block",
+			"proposal-block", cs.ProposalBlock.Hash(),
+			"commit-block", blockID.Hash,
+		)
 		return
 	}
 
@@ -1514,12 +1511,13 @@ func (cs *State) finalizeCommit(height int64) {
 		panic(fmt.Errorf("+2/3 committed an invalid block: %w", err))
 	}
 
-	cs.Logger.Info("Finalizing commit of block with N txs",
+	cs.Logger.Info("finalizing commit of block with N txs",
 		"height", block.Height,
 		"hash", block.Hash(),
 		"root", block.AppHash,
-		"N", len(block.Txs))
-	cs.Logger.Info(fmt.Sprintf("%v", block))
+		"N", len(block.Txs),
+	)
+	cs.Logger.Debug(fmt.Sprintf("%v", block))
 
 	fail.Fail() // XXX
 
@@ -1991,8 +1989,11 @@ func (cs *State) addVote(
 					cs.ValidBlockParts = cs.ProposalBlockParts
 				} else {
 					cs.Logger.Info(
-						"Valid block we don't know about. Set ProposalBlock=nil",
-						"proposal", cs.ProposalBlock.Hash(), "blockID", blockID.Hash)
+						"valid block we do not know about; set ProposalBlock=nil",
+						"proposal", cs.ProposalBlock.Hash(),
+						"blockID", blockID.Hash,
+					)
+
 					// We're getting the wrong block.
 					cs.ProposalBlock = nil
 				}
